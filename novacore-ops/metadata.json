@@ -1,0 +1,8 @@
+{
+  "name": "NovaCore Ops",
+  "description": "Sistema de gestão inteligente para acompanhamento de demandas internas, controle de fluxo e gerenciamento de SLA.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

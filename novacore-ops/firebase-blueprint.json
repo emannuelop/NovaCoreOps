@@ -1,0 +1,123 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "Represents a user or collaborator in the system.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "avatarUrl": { "type": "string" },
+        "role": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "name", "email"]
+    },
+    "Category": {
+      "title": "Category",
+      "description": "Represents a category of demand (e.g., TI, RH).",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name"]
+    },
+    "Demand": {
+      "title": "Demand",
+      "description": "Represents a work demand or task.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "requester": { "type": "string" },
+        "priority": { "type": "string" },
+        "category": { "type": "string" },
+        "status": { "type": "string" },
+        "assignedTo": { "type": "string" },
+        "assignedToName": { "type": "string" },
+        "involvedUids": { "type": "array" },
+        "involvedNames": { "type": "array" },
+        "openedAt": { "type": "string", "format": "date-time" },
+        "assignedAt": { "type": "string", "format": "date-time" },
+        "lastStatusChangedAt": { "type": "string", "format": "date-time" },
+        "elapsedTimes": { "type": "object" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "checklist": { "type": "array" }
+      },
+      "required": ["id", "title", "requester", "priority", "category", "status", "openedAt"]
+    },
+    "MovementLog": {
+      "title": "Movement Log",
+      "description": "Log of a demand's status or assignment modification.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "type": { "type": "string" },
+        "from": { "type": "string" },
+        "to": { "type": "string" },
+        "changedByUid": { "type": "string" },
+        "changedByName": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "duration": { "type": "number" }
+      },
+      "required": ["id", "type", "from", "to", "changedByUid", "changedByName", "createdAt"]
+    },
+    "Sector": {
+      "title": "Sector",
+      "description": "Represents a department or sector requesting a demand.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "inactive": { "type": "boolean" }
+      },
+      "required": ["id", "name"]
+    },
+    "Professional": {
+      "title": "Professional",
+      "description": "Represents an medical or technical professional involved in the demands.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "inactive": { "type": "boolean" }
+      },
+      "required": ["id", "name"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles and permissions lookup."
+    },
+    "/categories/{categoryId}": {
+      "schema": "Category",
+      "description": "Custom categories registered by the team."
+    },
+    "/sectors/{sectorId}": {
+      "schema": "Sector",
+      "description": "Sectors or department list."
+    },
+    "/professionals/{professionalId}": {
+      "schema": "Professional",
+      "description": "Professionals or team members list."
+    },
+    "/demands/{demandId}": {
+      "schema": "Demand",
+      "description": "Primary demands/tasks list."
+    },
+    "/demands/{demandId}/logs/{logId}": {
+      "schema": "MovementLog",
+      "description": "Movement logs subcollection."
+    }
+  }
+}

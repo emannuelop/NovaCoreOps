@@ -1,0 +1,143 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Primitive Definitions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isMasterAdmin() {
+      return isSignedIn() && 
+             request.auth.token.keys().hasAll(['email']) && 
+             request.auth.token.email.matches('(?i)^admin@novacore\\.com$');
+    }
+
+    function isUserAdmin() {
+      return isSignedIn() && (
+        isMasterAdmin() ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'Administrador')
+      );
+    }
+
+    function isApprovedUser() {
+      return isSignedIn() && (
+        isUserAdmin() ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.status == 'Aprovado')
+      );
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128;
+    }
+
+    // Is Valid User Profile
+    function isValidUser(data) {
+      return data.uid is string && data.uid.size() <= 128
+        && data.name is string && data.name.size() > 0 && data.name.size() <= 150
+        && data.email is string && data.email.size() <= 150
+        && (data.get('avatarUrl', null) == null || (data.get('avatarUrl', '') is string && data.get('avatarUrl', '').size() <= 500))
+        && (data.get('role', null) == null || (data.get('role', '') is string && data.get('role', '').size() <= 50))
+        && (data.get('status', null) == null || (data.get('status', '') is string && data.get('status', '').size() <= 30));
+    }
+
+    // Is Valid Category
+    function isValidCategory(data) {
+      return data.id is string && data.id.size() <= 128
+        && data.name is string && data.name.size() > 0 && data.name.size() <= 100
+        && (data.get('description', null) == null || (data.get('description', '') is string && data.get('description', '').size() <= 300))
+        && (data.get('inactive', null) == null || (data.get('inactive', false) is bool));
+    }
+
+    // Is Valid Sector
+    function isValidSector(data) {
+      return data.id is string && data.id.size() <= 128
+        && data.name is string && data.name.size() > 0 && data.name.size() <= 100
+        && (data.get('description', null) == null || (data.get('description', '') is string && data.get('description', '').size() <= 300))
+        && (data.get('inactive', null) == null || (data.get('inactive', false) is bool));
+    }
+
+    // Is Valid Professional
+    function isValidProfessional(data) {
+      return data.id is string && data.id.size() <= 128
+        && data.name is string && data.name.size() > 0 && data.name.size() <= 150
+        && (data.get('description', null) == null || (data.get('description', '') is string && data.get('description', '').size() <= 300))
+        && (data.get('createdAt', null) == null || (data.get('createdAt', '') is string && data.get('createdAt', '').size() <= 100))
+        && (data.get('inactive', null) == null || (data.get('inactive', false) is bool));
+    }
+
+    // Is Valid Demand (Allows schema verification for all field types)
+    function isValidDemand(data) {
+      return data.id is string && data.id.size() <= 128
+        && data.title is string && data.title.size() > 0 && data.title.size() <= 150
+        && (data.get('description', null) == null || (data.get('description', '') is string && data.get('description', '').size() <= 2000))
+        && data.requester is string && data.requester.size() > 0 && data.requester.size() <= 150
+        && data.priority is string && data.priority.size() <= 20
+        && data.category is string && data.category.size() <= 100
+        && data.status is string && data.status.size() <= 30
+        && (data.get('checklist', null) == null || data.get('checklist', []) is list);
+    }
+
+    // Is Valid Movement Log
+    function isValidMovementLog(data) {
+      return data.id is string && data.id.size() <= 128
+        && data.type is string && data.type.size() <= 30
+        && data.changedByUid is string
+        && data.changedByName is string && data.changedByName.size() <= 150;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Collection routing permissions
+    match /users/{userId} {
+      allow get: if isSignedIn() && (userId == request.auth.uid || isApprovedUser());
+      allow list: if isSignedIn();
+      allow create: if isSignedIn() && request.auth.uid == userId && isValidUser(incoming()) && (isMasterAdmin() || (incoming().role == 'Usuário Comum' && incoming().status == 'Pendente'));
+      allow update: if isSignedIn() && (isUserAdmin() || (request.auth.uid == userId && isValidUser(incoming()) && incoming().role == existing().role && incoming().status == existing().status));
+      allow delete: if isUserAdmin();
+    }
+
+    match /categories/{categoryId} {
+      allow get, list: if isSignedIn() && isApprovedUser();
+      allow create, update: if isUserAdmin() && isValidId(categoryId) && isValidCategory(incoming());
+      allow delete: if isUserAdmin() && isValidId(categoryId);
+    }
+
+    match /sectors/{sectorId} {
+      allow get, list: if isSignedIn() && isApprovedUser();
+      allow create, update: if isUserAdmin() && isValidId(sectorId) && isValidSector(incoming());
+      allow delete: if isUserAdmin() && isValidId(sectorId);
+    }
+
+    match /professionals/{professionalId} {
+      allow get, list: if isSignedIn() && isApprovedUser();
+      allow create, update: if isUserAdmin() && isValidId(professionalId) && isValidProfessional(incoming());
+      allow delete: if isUserAdmin() && isValidId(professionalId);
+    }
+
+    match /demands/{demandId} {
+      allow get, list: if isSignedIn() && isApprovedUser();
+      allow create, update: if isApprovedUser() && isValidId(demandId) && isValidDemand(incoming());
+      allow delete: if isUserAdmin() && isValidId(demandId);
+    }
+
+    match /demands/{demandId}/logs/{logId} {
+      allow get, list: if isSignedIn() && isApprovedUser();
+      allow create: if isApprovedUser() && isValidId(demandId) && isValidId(logId) && isValidMovementLog(incoming());
+      allow update, delete: if false;
+    }
+  }
+}

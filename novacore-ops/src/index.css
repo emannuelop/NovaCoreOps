@@ -1,0 +1,50 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  
+  /* Core brand colors based on the design tokens document */
+  --color-primary: #003434;
+  --color-primary-container: #004d4d;
+  --color-primary-fixed-dim: #94d1d1;
+  --color-secondary: #3abeb9;
+  --color-secondary-container: #e6f8f7;
+  --color-surface: #f8faf9;
+  --color-surface-dim: #d8dada;
+  --color-outline: #6f7978;
+  --color-outline-variant: #bfc8c8;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-surface);
+  color: #191c1c;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Glass effect and Custom Scrollbars */
+.custom-scrollbar::-webkit-scrollbar {
+  height: 6px;
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #bfc8c8;
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #aab2b2;
+}
+
+@media (max-width: 639px) {
+  .kanban-column {
+    min-width: 290px;
+    max-width: 320px;
+  }
+}
